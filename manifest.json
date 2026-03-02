@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
   "description": "Sync your Trakt.tv watchlist, watch history, favorites, and ratings to Obsidian notes.",
-  "author": "sarimabbas",
+  "author": "Sarim Abbas",
   "isDesktopOnly": false
 }

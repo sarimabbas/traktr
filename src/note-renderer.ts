@@ -2,6 +2,14 @@ import type { NormalizedItem } from "./types";
 import type { TraksidianSettings } from "./settings";
 import { renderTemplate, toFrontmatter } from "./utils";
 
+function traktUrl(item: NormalizedItem): string {
+  return `https://trakt.tv/${item.type === "movie" ? "movies" : "shows"}/${item.ids.slug}`;
+}
+
+function imdbUrl(item: NormalizedItem): string | null {
+  return item.ids.imdb ? `https://www.imdb.com/title/${item.ids.imdb}` : null;
+}
+
 /**
  * Build the full template context (variables available for {{interpolation}})
  * from a normalized item. Template variables are NOT prefixed — they use
@@ -28,10 +36,8 @@ function buildTemplateContext(
     imdb_id: item.ids.imdb || "",
     tmdb_id: item.ids.tmdb || "",
     tvdb_id: item.ids.tvdb || "",
-    trakt_url: `https://trakt.tv/${item.type === "movie" ? "movies" : "shows"}/${item.ids.slug}`,
-    imdb_url: item.ids.imdb
-      ? `https://www.imdb.com/title/${item.ids.imdb}`
-      : "",
+    trakt_url: traktUrl(item),
+    imdb_url: imdbUrl(item) ?? "",
     poster_url: item.poster_url || "",
     // Movie-specific
     tagline: item.tagline || "",
@@ -39,9 +45,7 @@ function buildTemplateContext(
     // Show-specific
     network: item.network || "",
     aired_episodes: item.aired_episodes || "",
-    first_aired: item.first_aired
-      ? item.first_aired.split("T")[0]
-      : "",
+    first_aired: item.first_aired ? item.first_aired.split("T")[0] : "",
     // Source flags
     watchlist: item.watchlist ? "true" : "",
     watchlist_added_at: item.watchlist_added_at || "",
@@ -148,10 +152,8 @@ function buildFrontmatterData(
   }
 
   // Links
-  data[`${p}url`] = `https://trakt.tv/${item.type === "movie" ? "movies" : "shows"}/${item.ids.slug}`;
-  data[`${p}imdb_url`] = item.ids.imdb
-    ? `https://www.imdb.com/title/${item.ids.imdb}`
-    : null;
+  data[`${p}url`] = traktUrl(item);
+  data[`${p}imdb_url`] = imdbUrl(item);
   data[`${p}poster_url`] = item.poster_url || null;
   data[`${p}synced_at`] = new Date().toISOString();
   data["tags"] = tags;
@@ -174,8 +176,7 @@ export function renderNote(
       ? settings.movieNoteTemplate
       : settings.showNoteTemplate;
 
-  const context = buildTemplateContext(item);
-  const body = renderTemplate(template, context);
+  const body = renderTemplate(template, buildTemplateContext(item));
 
   return `---\n${frontmatter}\n---\n${body}`;
 }
@@ -188,6 +189,5 @@ export function renderFrontmatterOnly(
   item: NormalizedItem,
   settings: TraksidianSettings
 ): string {
-  const fmData = buildFrontmatterData(item, settings);
-  return toFrontmatter(fmData);
+  return toFrontmatter(buildFrontmatterData(item, settings));
 }

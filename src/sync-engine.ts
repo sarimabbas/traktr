@@ -68,6 +68,10 @@ function baseFromShow(s: TraktShow): NormalizedItem {
   };
 }
 
+function itemKey(type: ItemType, traktId: number): string {
+  return `${type}:${traktId}`;
+}
+
 function getOrCreateItem(
   map: Map<string, NormalizedItem>,
   ids: TraktIds,
@@ -75,7 +79,7 @@ function getOrCreateItem(
   movie?: TraktMovie,
   show?: TraktShow
 ): NormalizedItem {
-  const key = `${type}:${ids.trakt}`;
+  const key = itemKey(type, ids.trakt);
   const existing = map.get(key);
   if (existing) return existing;
 
@@ -102,24 +106,20 @@ async function ensureFolder(app: App, path: string): Promise<void> {
   }
 }
 
-function buildFilename(
-  item: NormalizedItem,
-  template: string
-): string {
+function buildFilename(item: NormalizedItem, template: string): string {
   const context: Record<string, unknown> = {
     title: item.title,
     year: item.year,
     imdb_id: item.ids.imdb || "",
     trakt_id: item.ids.trakt,
   };
-  const raw = renderTemplate(template, context);
-  return sanitizeFilename(raw);
+  return sanitizeFilename(renderTemplate(template, context));
 }
 
 /**
- * Scan a folder for notes and extract the composite "type:trakt_id" key from
- * frontmatter. Both the id and type properties are read so that movies and
- * shows sharing the same numeric Trakt ID don't collide.
+ * Scan a folder for notes and build a composite "type:trakt_id" → TFile map
+ * from frontmatter. Reading both t_id and t_type avoids collisions between
+ * movies and shows that share the same numeric Trakt ID.
  */
 async function scanExistingNotes(
   app: App,
@@ -140,7 +140,7 @@ async function scanExistingNotes(
     const traktId = parseInt(frontmatter[idKey], 10);
     const type = frontmatter[typeKey];
     if (!isNaN(traktId) && (type === "movie" || type === "show")) {
-      map.set(`${type}:${traktId}`, child);
+      map.set(itemKey(type, traktId), child);
     }
   }
 
@@ -184,19 +184,17 @@ export class SyncEngine {
       // 1. Ensure valid token
       await ensureValidToken(this.settings, this.saveSettings);
 
-      // 2. Fetch from all enabled sources and merge into a single map keyed
-      //    by "type:trakt_id" to avoid cross-type ID collisions.
+      // 2. Fetch from all enabled sources in parallel, merging into a single
+      //    map keyed by "type:trakt_id" to avoid cross-type ID collisions.
       const merged = new Map<string, NormalizedItem>();
 
-      if (this.settings.syncMovies) {
-        await this.fetchAndMergeMovies(merged);
-      }
-      if (this.settings.syncShows) {
-        await this.fetchAndMergeShows(merged);
-      }
+      await Promise.all([
+        this.settings.syncMovies ? this.fetchAndMergeMovies(merged) : Promise.resolve(),
+        this.settings.syncShows ? this.fetchAndMergeShows(merged) : Promise.resolve(),
+      ]);
 
       // 3. Reconcile all items into the single notes folder
-      await this.reconcileType(merged, this.settings.folder, result);
+      await this.reconcileType(merged, result);
 
       // 4. Show result
       const msg = `Sync complete: ${result.added} added, ${result.updated} updated, ${result.removed} removed${result.failed > 0 ? `, ${result.failed} failed` : ""}`;
@@ -214,143 +212,107 @@ export class SyncEngine {
   }
 
   /**
-   * Fetch from all enabled sources for movies and merge into the map.
+   * Fetch from all enabled sources for movies in parallel and merge into map.
    */
   private async fetchAndMergeMovies(
     map: Map<string, NormalizedItem>
   ): Promise<void> {
     const { clientId, accessToken } = this.settings;
 
-    // Watchlist
-    if (this.settings.syncWatchlist) {
-      const items = await fetchWatchlist("movies", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.movie) continue;
-        const item = getOrCreateItem(
-          map, raw.movie.ids, "movie", raw.movie
-        );
-        item.watchlist = true;
-        item.watchlist_added_at = raw.listed_at;
-      }
+    const [watchlistItems, watchedItems, favoriteItems, ratingItems] = await Promise.all([
+      this.settings.syncWatchlist ? fetchWatchlist("movies", clientId, accessToken) : Promise.resolve([] as TraktWatchlistItem[]),
+      this.settings.syncWatched ? fetchWatchedMovies(clientId, accessToken) : Promise.resolve([] as TraktWatchedMovieItem[]),
+      this.settings.syncFavorites ? fetchFavorites("movies", clientId, accessToken) : Promise.resolve([] as TraktFavoriteItem[]),
+      this.settings.syncRatings ? fetchRatings("movies", clientId, accessToken) : Promise.resolve([] as TraktRatingItem[]),
+    ]);
+
+    for (const raw of watchlistItems) {
+      if (!raw.movie) continue;
+      const item = getOrCreateItem(map, raw.movie.ids, "movie", raw.movie);
+      item.watchlist = true;
+      item.watchlist_added_at = raw.listed_at;
     }
 
-    // Watched
-    if (this.settings.syncWatched) {
-      const items = await fetchWatchedMovies(clientId, accessToken);
-      for (const raw of items) {
-        const item = getOrCreateItem(
-          map, raw.movie.ids, "movie", raw.movie
-        );
-        item.watched = true;
-        item.plays = raw.plays;
-        item.last_watched_at = raw.last_watched_at;
-      }
+    for (const raw of watchedItems) {
+      const item = getOrCreateItem(map, raw.movie.ids, "movie", raw.movie);
+      item.watched = true;
+      item.plays = raw.plays;
+      item.last_watched_at = raw.last_watched_at;
     }
 
-    // Favorites
-    if (this.settings.syncFavorites) {
-      const items = await fetchFavorites("movies", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.movie) continue;
-        const item = getOrCreateItem(
-          map, raw.movie.ids, "movie", raw.movie
-        );
-        item.favorite = true;
-        item.favorited_at = raw.listed_at;
-      }
+    for (const raw of favoriteItems) {
+      if (!raw.movie) continue;
+      const item = getOrCreateItem(map, raw.movie.ids, "movie", raw.movie);
+      item.favorite = true;
+      item.favorited_at = raw.listed_at;
     }
 
-    // Ratings
-    if (this.settings.syncRatings) {
-      const items = await fetchRatings("movies", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.movie) continue;
-        const item = getOrCreateItem(
-          map, raw.movie.ids, "movie", raw.movie
-        );
-        item.my_rating = raw.rating;
-        item.rated_at = raw.rated_at;
-      }
+    for (const raw of ratingItems) {
+      if (!raw.movie) continue;
+      const item = getOrCreateItem(map, raw.movie.ids, "movie", raw.movie);
+      item.my_rating = raw.rating;
+      item.rated_at = raw.rated_at;
     }
   }
 
   /**
-   * Fetch from all enabled sources for shows and merge into the map.
+   * Fetch from all enabled sources for shows in parallel and merge into map.
    */
   private async fetchAndMergeShows(
     map: Map<string, NormalizedItem>
   ): Promise<void> {
     const { clientId, accessToken } = this.settings;
 
-    // Watchlist
-    if (this.settings.syncWatchlist) {
-      const items = await fetchWatchlist("shows", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.show) continue;
-        const item = getOrCreateItem(
-          map, raw.show.ids, "show", undefined, raw.show
+    const [watchlistItems, watchedItems, favoriteItems, ratingItems] = await Promise.all([
+      this.settings.syncWatchlist ? fetchWatchlist("shows", clientId, accessToken) : Promise.resolve([] as TraktWatchlistItem[]),
+      this.settings.syncWatched ? fetchWatchedShows(clientId, accessToken) : Promise.resolve([] as TraktWatchedShowItem[]),
+      this.settings.syncFavorites ? fetchFavorites("shows", clientId, accessToken) : Promise.resolve([] as TraktFavoriteItem[]),
+      this.settings.syncRatings ? fetchRatings("shows", clientId, accessToken) : Promise.resolve([] as TraktRatingItem[]),
+    ]);
+
+    for (const raw of watchlistItems) {
+      if (!raw.show) continue;
+      const item = getOrCreateItem(map, raw.show.ids, "show", undefined, raw.show);
+      item.watchlist = true;
+      item.watchlist_added_at = raw.listed_at;
+    }
+
+    for (const raw of watchedItems) {
+      const item = getOrCreateItem(map, raw.show.ids, "show", undefined, raw.show);
+      item.watched = true;
+      item.plays = raw.plays;
+      item.last_watched_at = raw.last_watched_at;
+      if (raw.seasons) {
+        item.episodes_watched = raw.seasons.reduce(
+          (sum, s) => sum + s.episodes.length,
+          0
         );
-        item.watchlist = true;
-        item.watchlist_added_at = raw.listed_at;
       }
     }
 
-    // Watched
-    if (this.settings.syncWatched) {
-      const items = await fetchWatchedShows(clientId, accessToken);
-      for (const raw of items) {
-        const item = getOrCreateItem(
-          map, raw.show.ids, "show", undefined, raw.show
-        );
-        item.watched = true;
-        item.plays = raw.plays;
-        item.last_watched_at = raw.last_watched_at;
-        // Count total episodes watched from seasons data
-        if (raw.seasons) {
-          let count = 0;
-          for (const season of raw.seasons) {
-            count += season.episodes.length;
-          }
-          item.episodes_watched = count;
-        }
-      }
+    for (const raw of favoriteItems) {
+      if (!raw.show) continue;
+      const item = getOrCreateItem(map, raw.show.ids, "show", undefined, raw.show);
+      item.favorite = true;
+      item.favorited_at = raw.listed_at;
     }
 
-    // Favorites
-    if (this.settings.syncFavorites) {
-      const items = await fetchFavorites("shows", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.show) continue;
-        const item = getOrCreateItem(
-          map, raw.show.ids, "show", undefined, raw.show
-        );
-        item.favorite = true;
-        item.favorited_at = raw.listed_at;
-      }
-    }
-
-    // Ratings
-    if (this.settings.syncRatings) {
-      const items = await fetchRatings("shows", clientId, accessToken);
-      for (const raw of items) {
-        if (!raw.show) continue;
-        const item = getOrCreateItem(
-          map, raw.show.ids, "show", undefined, raw.show
-        );
-        item.my_rating = raw.rating;
-        item.rated_at = raw.rated_at;
-      }
+    for (const raw of ratingItems) {
+      if (!raw.show) continue;
+      const item = getOrCreateItem(map, raw.show.ids, "show", undefined, raw.show);
+      item.my_rating = raw.rating;
+      item.rated_at = raw.rated_at;
     }
   }
 
   /**
-   * Reconcile merged items against the vault for the configured folder.
+   * Reconcile merged items against the vault.
    */
   private async reconcileType(
     mergedItems: Map<string, NormalizedItem>,
-    folderPath: string,
     result: SyncResult
   ): Promise<void> {
+    const folderPath = this.settings.folder;
     await ensureFolder(this.app, folderPath);
 
     const localNotes = await scanExistingNotes(
@@ -359,11 +321,11 @@ export class SyncEngine {
       this.settings.propertyPrefix
     );
 
-    // Create or update
-    for (const [key, item] of mergedItems) {
-      try {
-        // Fetch poster if TMDB key is configured
-        if (this.settings.tmdbApiKey && item.ids.tmdb) {
+    // Fetch all poster URLs in parallel before processing notes
+    if (this.settings.tmdbApiKey) {
+      await Promise.all(
+        [...mergedItems.values()].map(async (item) => {
+          if (!item.ids.tmdb) return;
           const posterFn =
             item.type === "movie" ? fetchMoviePosterUrl : fetchTvPosterUrl;
           item.poster_url = await posterFn(
@@ -371,35 +333,34 @@ export class SyncEngine {
             this.settings.tmdbApiKey,
             this.settings.posterSize
           );
-        }
+        })
+      );
+    }
 
+    // Create or update notes
+    for (const [key, item] of mergedItems) {
+      try {
         const existingFile = localNotes.get(key);
 
         if (!existingFile) {
           // CREATE
-          const filename = buildFilename(
-            item,
-            this.settings.filenameTemplate
-          );
+          const filename = buildFilename(item, this.settings.filenameTemplate);
           const filePath = `${folderPath}/${filename}.md`;
-          const content = renderNote(item, this.settings);
-          await this.app.vault.create(filePath, content);
+          await this.app.vault.create(filePath, renderNote(item, this.settings));
           result.added++;
         } else {
           // UPDATE
           if (this.settings.overwriteExisting) {
-            const content = renderNote(item, this.settings);
-            await this.app.vault.modify(existingFile, content);
+            await this.app.vault.modify(existingFile, renderNote(item, this.settings));
           } else {
             // Frontmatter-only update: preserve the body
             const existingContent = await this.app.vault.read(existingFile);
             const { body } = parseFrontmatter(existingContent);
-            const newFrontmatter = renderFrontmatterOnly(
-              item,
-              this.settings
+            const newFrontmatter = renderFrontmatterOnly(item, this.settings);
+            await this.app.vault.modify(
+              existingFile,
+              `---\n${newFrontmatter}\n---\n${body}`
             );
-            const newContent = `---\n${newFrontmatter}\n---\n${body}`;
-            await this.app.vault.modify(existingFile, newContent);
           }
           result.updated++;
         }
@@ -411,7 +372,7 @@ export class SyncEngine {
       }
     }
 
-    // Remove notes that are no longer in ANY synced source
+    // Remove notes that are no longer in any synced source
     if (this.settings.deleteRemovedItems) {
       for (const [key, file] of localNotes) {
         if (!mergedItems.has(key)) {

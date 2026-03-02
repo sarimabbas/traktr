@@ -94,23 +94,13 @@ export default class TraksidianPlugin extends Plugin {
     // Auto-sync
     this.configureAutoSync();
 
-    // Sync on startup
+    // Sync on startup (delayed to let Obsidian finish loading)
     if (this.settings.syncOnStartup && this.settings.accessToken) {
-      // Delay slightly to let Obsidian finish loading
-      this.registerInterval(
-        window.setTimeout(async () => {
-          this.updateStatusBar("Syncing...");
-          await this.syncEngine.sync();
-          this.updateStatusBar("Connected");
-        }, 5000)
-      );
-    }
-  }
-
-  onunload() {
-    if (this.autoSyncIntervalId !== null) {
-      window.clearInterval(this.autoSyncIntervalId);
-      this.autoSyncIntervalId = null;
+      window.setTimeout(async () => {
+        this.updateStatusBar("Syncing...");
+        await this.syncEngine.sync();
+        this.updateStatusBar("Connected");
+      }, 5000);
     }
   }
 
