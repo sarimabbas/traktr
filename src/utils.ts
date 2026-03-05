@@ -13,12 +13,17 @@ export function renderTemplate(
   template: string,
   context: Record<string, unknown>
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+  const rendered = template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
     const value = context[key];
     if (value === undefined || value === null) return "";
     if (Array.isArray(value)) return value.join(", ");
     return String(value);
   });
+  // Strip lines that are markdown images with an empty URL (e.g. no TMDB key)
+  return rendered
+    .split("\n")
+    .filter((line) => !/^!\[.*?\]\(\s*\)\s*$/.test(line))
+    .join("\n");
 }
 
 /**
