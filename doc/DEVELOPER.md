@@ -22,7 +22,7 @@ A reference for understanding, debugging, and extending the plugin.
 ## 1. Repository structure
 
 ```
-obsidian-trakt-watchlist/
+trakt/
 ├── src/
 │   ├── main.ts          # Plugin entry point and lifecycle
 │   ├── settings.ts      # Settings interface, defaults, settings UI tab
@@ -118,7 +118,6 @@ sequenceDiagram
     MAIN->>SE: new SyncEngine(app, settings, saveSettings)
     MAIN->>MAIN: addSettingTab()
     MAIN->>MAIN: addCommand() ×3
-    MAIN->>MAIN: addRibbonIcon()
     MAIN->>MAIN: addStatusBarItem()
     MAIN->>MAIN: configureAutoSync()
     alt syncOnStartup && accessToken
@@ -168,7 +167,9 @@ flowchart LR
 | Auth | `clientId`, `clientSecret`, `accessToken`, `refreshToken`, `tokenExpiresAt` |
 | TMDB | `tmdbApiKey`, `posterSize` |
 | Vault | `propertyPrefix`, `folder`, `filenameTemplate` |
-| Templates | `movieNoteTemplate`, `showNoteTemplate`, `tagPrefix` |
+| Templates | `movieNoteTemplate`, `showNoteTemplate` |
+| Tags | `addTags`, `tagPrefix` |
+| Tag notes | `addTagNotes`, `createTagNotes`, `tagNotesFolder` |
 | Sources | `syncWatchlist`, `syncFavorites`, `syncWatched`, `syncRatings` |
 | Behavior | `syncMovies`, `syncShows`, `autoSyncEnabled`, `autoSyncIntervalMinutes`, `syncOnStartup`, `overwriteExisting`, `deleteRemovedItems` |
 
@@ -250,7 +251,8 @@ flowchart TD
         FM ~~~ FS
     end
 
-    FETCH --> RECONCILE
+    FETCH --> TAGNOTES[ensureTagNotes\ncreate tag note files if missing]
+    TAGNOTES --> RECONCILE
 
     subgraph RECONCILE ["Phase 2 — Reconcile"]
         direction TB
@@ -318,8 +320,8 @@ flowchart TD
         L1{localNotes\nhas this key?}
         L1 -->|no| CREATE[vault.create new note]
         L1 -->|yes| L2{overwriteExisting?}
-        L2 -->|yes| OVERWRITE[vault.modify — full re-render]
-        L2 -->|no| FMONLY[vault.read → parseFrontmatter\nreplace frontmatter, keep body\nvault.modify]
+        L2 -->|yes| OVERWRITE[vault.process — full re-render]
+        L2 -->|no| FMONLY[fileManager.processFrontMatter\nmerge new fields, body untouched]
     end
 
     LOOP --> ORPHAN
@@ -348,7 +350,7 @@ flowchart TD
     E -->|no| G[skip file]
 ```
 
-> **Why read `t_type` as well as `t_id`?** Trakt IDs are not globally unique across types. Movie #1 and Show #1 are different entities. The composite key ensures they never collide.
+> **Why read `type` as well as `id`?** Trakt IDs are not globally unique across types. Movie #1 and Show #1 are different entities. The composite key ensures they never collide. The property names are `${propertyPrefix}id` and `${propertyPrefix}type` (e.g. `trakt_id`, `trakt_type` with the default prefix).
 
 ### Trakt API pagination
 
@@ -382,7 +384,7 @@ flowchart TD
     ITEM --> CTX[buildTemplateContext]
 
     FM --> |"Record&lt;string, unknown&gt;"| YML[toFrontmatter\nutils.ts]
-    YML --> FMSTR["---\nt_title: ...\ntags:\n  - trakt/movie\n---"]
+    YML --> FMSTR["---\ntrakt_title: ...\ntags:\n  - trakt/movie\n---"]
 
     CTX --> |"Record&lt;string, unknown&gt;"| TPL[renderTemplate\nutils.ts]
     TPL --> BODY["# Title (year)\n![poster](...)\n..."]
@@ -393,21 +395,18 @@ flowchart TD
 
 ### Frontmatter-only update (overwriteExisting = false)
 
+Uses Obsidian's `fileManager.processFrontMatter`, which atomically parses and rewrites the YAML block while leaving the note body untouched. New frontmatter values from `buildFrontmatterData` are merged in; null/undefined values delete the key; the body is never touched.
+
 ```mermaid
 flowchart LR
-    FILE[existing note] --> READ[vault.read]
-    READ --> PARSE[parseFrontmatter]
-    PARSE --> BODY[body string preserved]
-    ITEM[NormalizedItem] --> FMONLY[renderFrontmatterOnly\n→ toFrontmatter]
-    FMONLY --> NEWFM[new frontmatter string]
-    NEWFM --> JOIN["--- + frontmatter + ---\n+ body"]
-    BODY --> JOIN
-    JOIN --> WRITE[vault.modify]
+    ITEM[NormalizedItem] --> BFM[buildFrontmatterData]
+    BFM --> MERGE["processFrontMatter callback:\nmerge new keys into fm object"]
+    MERGE --> OBS[Obsidian rewrites frontmatter\nbody preserved]
 ```
 
 ### Template variable resolution
 
-`renderTemplate` in `utils.ts` does a simple regex replace of `{{varName}}` → value. Variables that are `null`/`undefined` become empty string. Arrays join with `", "`.
+`renderTemplate` in `utils.ts` does a simple regex replace of `{{varName}}` → value. Variables that are `null`/`undefined` become empty string. Arrays join with `", "`. After substitution, any line that is a Markdown image with an empty URL (e.g. `![poster]()` when no TMDB key is set) is stripped from the output.
 
 The same `{{variable}}` names are available whether you're using the movie template or the show template. Movie-specific variables (like `{{tagline}}`) are just empty in show notes, and vice versa.
 
@@ -473,7 +472,11 @@ classDiagram
         +string filenameTemplate
         +string movieNoteTemplate
         +string showNoteTemplate
+        +boolean addTags
         +string tagPrefix
+        +boolean addTagNotes
+        +boolean createTagNotes
+        +string tagNotesFolder
         +boolean syncWatchlist
         +boolean syncFavorites
         +boolean syncWatched

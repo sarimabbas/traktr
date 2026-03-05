@@ -1,22 +1,22 @@
-.trakt-auth-modal {
+.traktr-auth-modal {
   max-width: 400px;
 }
 
-.trakt-auth-modal h2 {
+.traktr-auth-modal h2 {
   margin-bottom: 1em;
 }
 
-.trakt-auth-status {
+.traktr-auth-status {
   color: var(--text-muted);
   margin-bottom: 0.5em;
 }
 
-.trakt-auth-code-container {
+.traktr-auth-code-container {
   text-align: center;
   margin: 1.5em 0;
 }
 
-.trakt-auth-code {
+.traktr-auth-code {
   display: inline-block;
   font-size: 2em;
   font-weight: bold;
@@ -29,18 +29,18 @@
   transition: background 0.15s ease;
 }
 
-.trakt-auth-code:hover {
+.traktr-auth-code:hover {
   background: var(--background-modifier-hover);
 }
 
-.trakt-auth-copy-hint {
+.traktr-auth-copy-hint {
   display: block;
   margin-top: 0.3em;
   color: var(--text-faint);
   font-size: 0.85em;
 }
 
-.trakt-auth-countdown {
+.traktr-auth-countdown {
   color: var(--text-muted);
   font-size: 0.9em;
   margin-bottom: 1em;

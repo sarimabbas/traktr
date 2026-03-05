@@ -22,7 +22,7 @@ Movies and shows live in the same folder and are distinguished by the `trakt_typ
 
 **Manual installation:**
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/sarimabbas/obsidian-trakt-watchlist/releases/latest)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/sarimabbas/traktr/releases/latest)
 2. In your vault, create the folder `.obsidian/plugins/traktr/`
 3. Copy the three files into that folder
 4. Open Obsidian → Settings → Community plugins → enable **Traktr**

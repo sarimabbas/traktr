@@ -14,6 +14,7 @@ import type { TraktrSettings } from "./settings";
 export class AuthModal extends Modal {
   private cancelled = false;
   private pollInterval: number | null = null;
+  private countdownInterval: number | null = null;
   private settings: TraktrSettings;
   private onSuccess: () => Promise<void>;
 
@@ -30,13 +31,13 @@ export class AuthModal extends Modal {
   async onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.addClass("trakt-auth-modal");
+    contentEl.addClass("traktr-auth-modal");
 
     contentEl.createEl("h2", { text: "Connect to Trakt" });
 
     const statusEl = contentEl.createEl("p", {
       text: "Requesting device code...",
-      cls: "trakt-auth-status",
+      cls: "traktr-auth-status",
     });
 
     try {
@@ -54,11 +55,11 @@ export class AuthModal extends Modal {
       });
 
       const codeContainer = contentEl.createEl("div", {
-        cls: "trakt-auth-code-container",
+        cls: "traktr-auth-code-container",
       });
       const codeEl = codeContainer.createEl("code", {
         text: deviceCode.user_code,
-        cls: "trakt-auth-code",
+        cls: "traktr-auth-code",
       });
       codeEl.addEventListener("click", () => {
         navigator.clipboard.writeText(deviceCode.user_code);
@@ -66,11 +67,11 @@ export class AuthModal extends Modal {
       });
       codeContainer.createEl("small", {
         text: "Click to copy",
-        cls: "trakt-auth-copy-hint",
+        cls: "traktr-auth-copy-hint",
       });
 
       const countdownEl = contentEl.createEl("p", {
-        cls: "trakt-auth-countdown",
+        cls: "traktr-auth-countdown",
       });
 
       const cancelBtn = contentEl.createEl("button", {
@@ -80,14 +81,14 @@ export class AuthModal extends Modal {
 
       // Start countdown
       const expiresAt = Date.now() + deviceCode.expires_in * 1000;
-      const countdownInterval = window.setInterval(() => {
+      this.countdownInterval = window.setInterval(() => {
         const remaining = Math.max(
           0,
           Math.floor((expiresAt - Date.now()) / 1000)
         );
         countdownEl.setText(`Code expires in ${remaining}s`);
         if (remaining <= 0) {
-          window.clearInterval(countdownInterval);
+          this.clearCountdown();
           statusEl.setText("Code expired. Please close and try again.");
         }
       }, 1000);
@@ -97,7 +98,7 @@ export class AuthModal extends Modal {
       this.pollInterval = window.setInterval(async () => {
         if (this.cancelled) {
           this.clearPolling();
-          window.clearInterval(countdownInterval);
+          this.clearCountdown();
           return;
         }
 
@@ -110,7 +111,7 @@ export class AuthModal extends Modal {
 
           if (token) {
             this.clearPolling();
-            window.clearInterval(countdownInterval);
+            this.clearCountdown();
 
             // Save tokens
             this.settings.accessToken = token.access_token;
@@ -126,7 +127,7 @@ export class AuthModal extends Modal {
         } catch (e) {
           if (e instanceof TraktApiError && !e.isRetryable) {
             this.clearPolling();
-            window.clearInterval(countdownInterval);
+            this.clearCountdown();
             statusEl.setText(`Error: ${e.message}`);
           }
           // For retryable errors (429), just skip this poll cycle
@@ -146,9 +147,17 @@ export class AuthModal extends Modal {
     }
   }
 
+  private clearCountdown() {
+    if (this.countdownInterval !== null) {
+      window.clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+  }
+
   onClose() {
     this.cancelled = true;
     this.clearPolling();
+    this.clearCountdown();
     this.contentEl.empty();
   }
 }
