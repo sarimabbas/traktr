@@ -1,6 +1,6 @@
 # Traksidian
 
-Sync your Trakt.tv watchlist, watch history, favorites, and ratings to Obsidian notes.
+Obsidian plugin to sync your Trakt.tv watchlist, watch history, favorites, and ratings.
 
 ![bases_view](./doc/bases_view.png)
 

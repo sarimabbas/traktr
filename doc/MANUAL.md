@@ -6,20 +6,26 @@ Traksidian is an Obsidian plugin that pulls your [Trakt.tv](https://trakt.tv) da
 
 - **Frontmatter** — structured metadata (title, year, genres, ratings, watch status, Trakt/IMDB/TMDB IDs, poster URL, sync timestamp)
 - **Body** — rendered from a customizable template with `{{variable}}` placeholders
-- **Tags** — automatically generated from the type, genres, and sync sources
+- **Tags** — automatically generated from the type, genres, and sync sources (optional)
+- **Tag notes** — wikilinks to topic files for building a graph (optional)
 
-Movies and shows live in the same folder and are distinguished by the `t_type` frontmatter field (`movie` or `show`) and tags like `#trakt/movie` / `#trakt/show`. Dataview queries can filter by either.
+Movies and shows live in the same folder and are distinguished by the `trakt_type` frontmatter field (`movie` or `show`). Dataview queries can filter by either.
 
 ---
 
-## 2. Installation (manual)
+## 2. Installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release.
-2. In your vault, create the folder `.obsidian/plugins/traksidian/`.
-3. Copy the three files into that folder.
-4. Open Obsidian → Settings → Community plugins → enable **Traksidian**.
+**Community plugin directory:**
 
-> The plugin is not yet listed in the Obsidian community plugin registry. Until then, manual installation is required.
+1. Open Obsidian → Settings → Community plugins → Browse
+2. Search for "Traksidian" and install
+
+**Manual installation:**
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/sarimabbas/obsidian-trakt-watchlist/releases/latest)
+2. In your vault, create the folder `.obsidian/plugins/traksidian/`
+3. Copy the three files into that folder
+4. Open Obsidian → Settings → Community plugins → enable **Traksidian**
 
 ---
 
@@ -27,31 +33,33 @@ Movies and shows live in the same folder and are distinguished by the `t_type` f
 
 ### 3a. Create a Trakt application
 
-1. Sign in to [trakt.tv](https://trakt.tv) and go to **Settings → Your API Apps → New Application**.
-2. Give it any name (e.g. "Traksidian").
-3. For **Redirect URI**, enter `urn:ietf:wg:oauth:2.0:oob`.
-4. Save. Copy the **Client ID** and **Client Secret**.
+1. Sign in to [trakt.tv](https://trakt.tv) and go to **Settings → Your API Apps → New Application**
+2. Give it any name (e.g. "Traksidian")
+3. For **Redirect URI**, enter `urn:ietf:wg:oauth:2.0:oob`
+4. Save. Copy the **Client ID** and **Client Secret**
 
 ### 3b. (Optional) Get a TMDB API key
 
-Poster images are fetched from [The Movie Database](https://themoviedb.org). A free API key is sufficient.
+Poster images are fetched from [The Movie Database](https://themoviedb.org). A free API key is sufficient. If you skip this, notes are created without poster images.
 
-1. Create an account at themoviedb.org.
-2. Go to **Settings → API → Create → Developer**.
-3. Copy the **API Key (v3 auth)**.
+1. Create an account at themoviedb.org
+2. Go to **Settings → API → Create → Developer**
+3. Copy the **API Key (v3 auth)**
 
 ---
 
 ## 4. Authentication flow
 
-1. Open **Settings → Traksidian**.
-2. Paste your **Trakt Client ID** and **Client Secret**.
-3. Click **Connect to Trakt**. A modal opens showing a URL and a short device code.
-4. Visit the URL in a browser, enter the code, and approve access.
-5. The modal polls Trakt and closes automatically once authorized.
-6. The Connection status field will show "Connected to Trakt."
+1. Open **Settings → Traksidian**
+2. Paste your **Trakt Client ID** and **Client Secret**
+3. Click **Connect to Trakt** — a modal opens showing a URL and a short device code
+4. Visit the URL in a browser, enter the code, and approve access
+5. The modal polls Trakt and closes automatically once authorized
+6. The Connection status field shows "Connected to Trakt"
 
 To revoke access, click **Disconnect** in the settings tab or run the command **Traksidian: Disconnect account**.
+
+Access tokens are refreshed automatically before each sync (no manual re-authentication needed).
 
 ---
 
@@ -65,35 +73,48 @@ To revoke access, click **Disconnect** in the settings tab or run the command **
 | Trakt Client Secret | From the same application page. |
 | Connection status | Shows current state; buttons to connect or disconnect. |
 
-### TMDB (Poster Images)
+### TMDB (poster images)
 
 | Setting | Default | Description |
 |---|---|---|
 | TMDB API key | _(blank)_ | Optional. Leave blank to skip poster images. |
 | Poster size | `w500` | Image width variant fetched from TMDB. Options: w92, w154, w185, w342, w500, w780, original. |
 
-### Property Namespace
+### Notes
 
 | Setting | Default | Description |
 |---|---|---|
-| Property prefix | `t_` | Prepended to all frontmatter keys written by the plugin (e.g. `t_title`, `t_watched`). Set to `""` for no prefix. |
+| Notes folder | `trakt` | Vault folder where all notes are created. Created automatically if missing. |
+| Filename template | `{{title}} ({{year}})` | Template for note filenames. Variables: `{{title}}`, `{{year}}`, `{{imdb_id}}`, `{{trakt_id}}`. |
+| Property prefix | `trakt_` | Prefix for all frontmatter properties written by the plugin (e.g. `trakt_title`, `trakt_watched`). Leave blank for no prefix. |
 
-### Folders & File Naming
-
-| Setting | Default | Description |
-|---|---|---|
-| Notes folder | `Trakt` | Vault path where all notes are created. The folder is created automatically if missing. |
-| Filename template | `{{title}} ({{year}})` | Template for the note filename. Variables: `{{title}}`, `{{year}}`, `{{imdb_id}}`, `{{trakt_id}}`. |
-
-### Note Templates
+### Note templates
 
 | Setting | Default | Description |
 |---|---|---|
-| Tag prefix | `trakt` | Prefix for auto-generated tags (e.g. `trakt` → `#trakt/movie`, `#trakt/genre/action`). |
-| Movie note template | _(see below)_ | Markdown template for the body of movie notes. |
-| TV show note template | _(see below)_ | Markdown template for the body of TV show notes. |
+| Movie note template | _(see below)_ | Markdown template for the body of movie notes. Uses `{{variable}}` syntax. |
+| TV show note template | _(see below)_ | Markdown template for the body of TV show notes. Uses `{{variable}}` syntax. |
 
-### Sync Sources
+Both templates have a **Reset to default** button.
+
+### Tags
+
+| Setting | Default | Description |
+|---|---|---|
+| Add tags | on | Add Obsidian tags to frontmatter on each sync (e.g. `#trakt/genre/action`). |
+| Tag prefix | `trakt` | Prefix for generated tags (e.g. `trakt` → `#trakt/movie`, `#trakt/genre/action`). |
+
+### Tag notes
+
+Tag notes are topic files you link to from your notes, creating a graph of connections. Use either tags or tag notes — using both is redundant.
+
+| Setting | Default | Description |
+|---|---|---|
+| Add tag notes to frontmatter | off | Adds a wikilink list property to frontmatter on each sync (e.g. `[[trakt/genre/action]]`). Alternatively, use `{{tag_notes}}` in your template to place links in the note body instead. |
+| Create tag notes | off | Automatically create empty tag note files if they don't exist. |
+| Tag notes folder | `trakt` | Vault folder for tag note files. Used for frontmatter links, file creation, and the `{{tag_notes}}` template variable. |
+
+### Sync sources
 
 | Setting | Default | Description |
 |---|---|---|
@@ -102,17 +123,21 @@ To revoke access, click **Disconnect** in the settings tab or run the command **
 | Sync watch history | off | Items you've watched. Adds play count and last-watched date. Can be a large dataset. |
 | Sync ratings | off | Items you've rated (1–10). |
 
-### Sync Behavior
+### Sync behavior
 
 | Setting | Default | Description |
 |---|---|---|
 | Sync movies | on | Include movies in the sync. |
 | Sync TV shows | on | Include TV shows in the sync. |
-| Sync on startup | off | Automatically run a sync when Obsidian loads. |
+| Sync on startup | off | Automatically run a sync when Obsidian loads (5-second delay). |
 | Auto-sync | off | Periodically sync in the background. |
-| Auto-sync interval | 60 min | How often to auto-sync (5–360 minutes). Visible only when auto-sync is on. |
-| Overwrite existing note body | off | When **off**, only frontmatter is updated and the body of existing notes is preserved. When **on**, the full note is regenerated from the template on every sync. |
-| Remove notes for deleted items | off | When **on**, notes for items no longer present in any enabled sync source are moved to the system trash. |
+| Auto-sync interval | 60 min | How often to auto-sync (5–360 minutes). Visible only when auto-sync is enabled. |
+| Overwrite existing note body | off | When **off**, only frontmatter is updated and the note body is preserved. When **on**, the full note is regenerated from the template on every sync — any edits you've made to the note body will be permanently lost. |
+| Remove notes for deleted items | off | When **on**, notes for items no longer in any enabled sync source are moved to trash. |
+
+### Reset
+
+**Reset to defaults** restores all settings to their defaults. Authentication credentials and TMDB API key are preserved.
 
 ---
 
@@ -120,47 +145,48 @@ To revoke access, click **Disconnect** in the settings tab or run the command **
 
 ### Frontmatter fields
 
-All fields below are prefixed with the configured **Property prefix** (default `t_`).
+All fields below are prefixed with the configured **Property prefix** (default `trakt_`).
 
 | Field | Type | Description |
 |---|---|---|
-| `t_title` | string | Title of the movie or show. |
-| `t_year` | number | Release year. |
-| `t_type` | `movie` \| `show` | Content type. |
-| `t_id` | number | Trakt numeric ID. |
-| `t_slug` | string | Trakt URL slug. |
-| `t_imdb_id` | string | IMDB ID (e.g. `tt1234567`). |
-| `t_tmdb_id` | number | TMDB numeric ID. |
-| `t_tvdb_id` | number | TVDB ID (shows only). |
-| `t_genres` | list | Genre list. |
-| `t_runtime` | number | Runtime in minutes (per episode for shows). |
-| `t_certification` | string | Age certification (e.g. `PG-13`). |
-| `t_rating` | number | Trakt community rating (0–10). |
-| `t_votes` | number | Number of Trakt votes. |
-| `t_country` | string | Country of origin code. |
-| `t_language` | string | Primary language code. |
-| `t_status` | string | Status (e.g. `released`, `ended`, `returning series`). |
-| `t_overview` | string | Plot summary. |
-| `t_released` | string | Release date (movies only, YYYY-MM-DD). |
-| `t_tagline` | string | Tagline (movies only). |
-| `t_network` | string | Broadcasting network (shows only). |
-| `t_aired_episodes` | number | Total aired episodes (shows only). |
-| `t_first_aired` | string | First air date (shows only, YYYY-MM-DD). |
-| `t_watchlist` | boolean | Present if synced from watchlist. |
-| `t_watchlist_added_at` | string | ISO timestamp when added to watchlist. |
-| `t_watched` | boolean | Present if synced from watch history. |
-| `t_plays` | number | Number of times watched/played. |
-| `t_last_watched_at` | string | ISO timestamp of last watch. |
-| `t_episodes_watched` | number | Total episodes watched (shows only). |
-| `t_favorite` | boolean | Present if synced from favorites. |
-| `t_favorited_at` | string | ISO timestamp when favorited. |
-| `t_my_rating` | number | Your personal rating (1–10). |
-| `t_rated_at` | string | ISO timestamp when rated. |
-| `t_url` | string | Trakt page URL. |
-| `t_imdb_url` | string | IMDB page URL. |
-| `t_poster_url` | string | TMDB poster image URL. |
-| `t_synced_at` | string | ISO timestamp of last sync. |
-| `tags` | list | Auto-generated tags (see below). |
+| `trakt_title` | string | Title of the movie or show. |
+| `trakt_year` | number | Release year. |
+| `trakt_type` | `movie` \| `show` | Content type. |
+| `trakt_id` | number | Trakt numeric ID. |
+| `trakt_slug` | string | Trakt URL slug. |
+| `trakt_imdb_id` | string | IMDB ID (e.g. `tt1234567`). |
+| `trakt_tmdb_id` | number | TMDB numeric ID. |
+| `trakt_tvdb_id` | number | TVDB ID (shows only). |
+| `trakt_genres` | list | Genre list. |
+| `trakt_runtime` | number | Runtime in minutes (per episode for shows). |
+| `trakt_certification` | string | Age certification (e.g. `PG-13`). |
+| `trakt_rating` | number | Trakt community rating (0–10). |
+| `trakt_votes` | number | Number of Trakt votes. |
+| `trakt_country` | string | Country of origin code. |
+| `trakt_language` | string | Primary language code. |
+| `trakt_status` | string | Status (e.g. `released`, `ended`, `returning series`). |
+| `trakt_overview` | string | Plot summary. |
+| `trakt_released` | string | Release date (movies only, YYYY-MM-DD). |
+| `trakt_tagline` | string | Tagline (movies only). |
+| `trakt_network` | string | Broadcasting network (shows only). |
+| `trakt_aired_episodes` | number | Total aired episodes (shows only). |
+| `trakt_first_aired` | string | First air date (shows only, YYYY-MM-DD). |
+| `trakt_watchlist` | boolean | Present if synced from watchlist. |
+| `trakt_watchlist_added_at` | string | ISO timestamp when added to watchlist. |
+| `trakt_watched` | boolean | Present if synced from watch history. |
+| `trakt_plays` | number | Number of times watched/played. |
+| `trakt_last_watched_at` | string | ISO timestamp of last watch. |
+| `trakt_episodes_watched` | number | Total episodes watched (shows only). |
+| `trakt_favorite` | boolean | Present if synced from favorites. |
+| `trakt_favorited_at` | string | ISO timestamp when favorited. |
+| `trakt_my_rating` | number | Your personal rating (1–10). |
+| `trakt_rated_at` | string | ISO timestamp when rated. |
+| `trakt_url` | string | Trakt page URL. |
+| `trakt_imdb_url` | string | IMDB page URL. |
+| `trakt_poster_url` | string | TMDB poster image URL. |
+| `trakt_synced_at` | string | ISO timestamp of last sync. |
+| `trakt_tag_notes` | list | Wikilinks to tag note files (when "Add tag notes to frontmatter" is on). |
+| `tags` | list | Auto-generated Obsidian tags (when "Add tags" is on). |
 
 ### Auto-generated tags
 
@@ -198,22 +224,23 @@ The note body template uses `{{variable}}` syntax. Available variables:
 | `{{tvdb_id}}` | TVDB ID |
 | `{{trakt_url}}` | Trakt URL |
 | `{{imdb_url}}` | IMDB URL |
-| `{{poster_url}}` | Poster image URL |
+| `{{poster_url}}` | Poster image URL (empty if no TMDB key; line is omitted from output) |
+| `{{tag_notes}}` | Comma-separated wikilinks to tag notes (always available regardless of tag notes settings) |
 | `{{tagline}}` | Tagline (movies) |
 | `{{released}}` | Release date (movies) |
 | `{{network}}` | Network (shows) |
 | `{{aired_episodes}}` | Aired episode count (shows) |
 | `{{first_aired}}` | First air date (shows) |
 | `{{watchlist}}` | `true` if on watchlist |
-| `{{watchlist_added_at}}` | Watchlist add date |
+| `{{watchlist_added_at}}` | Watchlist add timestamp |
 | `{{watched}}` | `true` if watched |
 | `{{plays}}` | Play count |
 | `{{last_watched_at}}` | Last watched date |
 | `{{episodes_watched}}` | Episodes watched (shows) |
 | `{{favorite}}` | `true` if favorited |
-| `{{favorited_at}}` | Favorited date |
+| `{{favorited_at}}` | Favorited timestamp |
 | `{{my_rating}}` | Your rating (1–10) |
-| `{{rated_at}}` | Rated date |
+| `{{rated_at}}` | Rated timestamp |
 
 ---
 
@@ -221,10 +248,10 @@ The note body template uses `{{variable}}` syntax. Available variables:
 
 ### Create vs. update
 
-- **New item** (no existing note with matching `t_type` + `t_id`): a note is created using the full template.
+- **New item** (no existing note with matching `trakt_type` + `trakt_id`): a note is created using the full template.
 - **Existing item**: behavior depends on the **Overwrite existing note body** setting:
-  - **Off** (default): only the frontmatter block is replaced; everything below `---` is left untouched, so your personal notes are preserved.
-  - **On**: the entire note (frontmatter + body) is regenerated from the template.
+  - **Off** (default): only the frontmatter block is updated; everything below `---` is left untouched, so your personal notes are preserved.
+  - **On**: the entire note (frontmatter + body) is regenerated from the template — body edits are lost.
 
 ### Delete
 
@@ -232,24 +259,32 @@ When **Remove notes for deleted items** is enabled, any note whose composite `ty
 
 ### Running a sync
 
-- **Manual**: ribbon icon, or command **Traksidian: Sync watchlist**.
-- **On startup**: enable **Sync on startup** in settings (runs 5 seconds after Obsidian loads).
-- **Scheduled**: enable **Auto-sync** and set an interval.
+- **Manual**: command **Traksidian: Sync** (accessible via the command palette)
+- **On startup**: enable **Sync on startup** in settings (runs 5 seconds after Obsidian loads)
+- **Scheduled**: enable **Auto-sync** and set an interval
 
 ### Dataview example queries
 
 Filter by type:
 ```dataview
-TABLE t_year, t_rating, t_watched
-FROM "Trakt"
-WHERE t_type = "movie"
-SORT t_rating DESC
+TABLE trakt_year, trakt_rating, trakt_watched
+FROM "trakt"
+WHERE trakt_type = "movie"
+SORT trakt_rating DESC
 ```
 
 Show only favorites:
 ```dataview
-TABLE t_year, t_my_rating
-FROM "Trakt"
-WHERE t_favorite = true
-SORT t_my_rating DESC
+TABLE trakt_year, trakt_my_rating
+FROM "trakt"
+WHERE trakt_favorite = true
+SORT trakt_my_rating DESC
+```
+
+Show your watchlist:
+```dataview
+TABLE trakt_year, trakt_type, trakt_genres
+FROM "trakt"
+WHERE trakt_watchlist = true
+SORT trakt_year DESC
 ```

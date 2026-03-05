@@ -29,8 +29,8 @@ export default class TraksidianPlugin extends Plugin {
 
     // Commands
     this.addCommand({
-      id: "trakt-sync-watchlist",
-      name: "Sync watchlist",
+      id: "trakt-sync",
+      name: "Sync",
       callback: async () => {
         if (!this.settings.accessToken) {
           new Notice(
