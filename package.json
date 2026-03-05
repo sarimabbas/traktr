@@ -1,5 +1,5 @@
 {
-  "name": "traksidian",
+  "name": "traktr",
   "version": "1.0.0",
   "description": "Sync your Trakt.tv watchlist, watch history, favorites, and ratings to Obsidian notes.",
   "main": "main.js",

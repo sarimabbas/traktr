@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import type TraksidianPlugin from "./main";
+import type TraktrPlugin from "./main";
 
 export const POSTER_SIZES = [
   "w92",
@@ -13,7 +13,7 @@ export const POSTER_SIZES = [
 
 export type PosterSize = (typeof POSTER_SIZES)[number];
 
-export interface TraksidianSettings {
+export interface TraktrSettings {
   // Authentication
   clientId: string;
   clientSecret: string;
@@ -118,7 +118,7 @@ export const DEFAULT_SHOW_TEMPLATE = `![poster]({{poster_url}})
 
 `;
 
-export const DEFAULT_SETTINGS: TraksidianSettings = {
+export const DEFAULT_SETTINGS: TraktrSettings = {
   clientId: "",
   clientSecret: "",
   accessToken: "",
@@ -157,10 +157,10 @@ export const DEFAULT_SETTINGS: TraksidianSettings = {
   deleteRemovedItems: false,
 };
 
-export class TraksidianSettingTab extends PluginSettingTab {
-  plugin: TraksidianPlugin;
+export class TraktrSettingTab extends PluginSettingTab {
+  plugin: TraktrPlugin;
 
-  constructor(app: App, plugin: TraksidianPlugin) {
+  constructor(app: App, plugin: TraktrPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }

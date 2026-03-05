@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Traksidian — an Obsidian plugin that syncs Trakt.tv data (watchlist, watch history, favorites, ratings) into vault notes with YAML frontmatter and customizable templates.
+Traktr — an Obsidian plugin that syncs Trakt.tv data (watchlist, watch history, favorites, ratings) into vault notes with YAML frontmatter and customizable templates.
 
 ## Build Commands
 

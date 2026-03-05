@@ -1,5 +1,5 @@
 import type { NormalizedItem } from "./types";
-import type { TraksidianSettings } from "./settings";
+import type { TraktrSettings } from "./settings";
 import { renderTemplate, toFrontmatter } from "./utils";
 
 function traktUrl(item: NormalizedItem): string {
@@ -17,7 +17,7 @@ function imdbUrl(item: NormalizedItem): string | null {
  */
 function buildTemplateContext(
   item: NormalizedItem,
-  settings: TraksidianSettings
+  settings: TraktrSettings
 ): Record<string, unknown> {
   const folder = settings.tagNotesFolder;
   const pfx = folder ? `${folder}/` : "";
@@ -82,7 +82,7 @@ function buildTemplateContext(
  */
 export function buildFrontmatterData(
   item: NormalizedItem,
-  settings: TraksidianSettings
+  settings: TraktrSettings
 ): Record<string, unknown> {
   const p = settings.propertyPrefix;
 
@@ -196,7 +196,7 @@ export function buildFrontmatterData(
  */
 export function renderNote(
   item: NormalizedItem,
-  settings: TraksidianSettings
+  settings: TraktrSettings
 ): string {
   const fmData = buildFrontmatterData(item, settings);
   const frontmatter = toFrontmatter(fmData);
@@ -217,7 +217,7 @@ export function renderNote(
  */
 export function renderFrontmatterOnly(
   item: NormalizedItem,
-  settings: TraksidianSettings
+  settings: TraktrSettings
 ): string {
   return toFrontmatter(buildFrontmatterData(item, settings));
 }

@@ -1,4 +1,4 @@
-# Traksidian — Developer Guide
+# Traktr — Developer Guide
 
 A reference for understanding, debugging, and extending the plugin.
 
@@ -72,7 +72,7 @@ esbuild bundles everything into a single `main.js` with all `node_modules` inlin
 ```mermaid
 flowchart TD
     OBS[Obsidian runtime]
-    MAIN[TraksidianPlugin\nmain.ts]
+    MAIN[TraktrPlugin\nmain.ts]
     SE[SyncEngine\nsync-engine.ts]
     NR[note-renderer.ts]
     TA[trakt-api.ts]
@@ -109,7 +109,7 @@ The plugin has no background server. Everything happens inside the Obsidian proc
 ```mermaid
 sequenceDiagram
     participant OBS as Obsidian
-    participant MAIN as TraksidianPlugin
+    participant MAIN as TraktrPlugin
     participant SE as SyncEngine
     participant VAULT as Vault
 
@@ -155,7 +155,7 @@ flowchart LR
     LD --> S[this.settings object]
     S -->|passed by reference| SE[SyncEngine]
     S -->|passed by reference| AUTH[AuthModal]
-    UI[TraksidianSettingTab] -->|mutates| S
+    UI[TraktrSettingTab] -->|mutates| S
     UI -->|calls| SAVE[saveSettings → saveData]
 ```
 
@@ -460,7 +460,7 @@ classDiagram
         +string[] errors
     }
 
-    class TraksidianSettings {
+    class TraktrSettings {
         +string clientId
         +string clientSecret
         +string accessToken
@@ -500,8 +500,8 @@ classDiagram
 
 ### Add a new sync source
 
-1. Add a `syncXxx: boolean` field to `TraksidianSettings` in `settings.ts` and to `DEFAULT_SETTINGS`
-2. Add a toggle setting in `TraksidianSettingTab.display()`
+1. Add a `syncXxx: boolean` field to `TraktrSettings` in `settings.ts` and to `DEFAULT_SETTINGS`
+2. Add a toggle setting in `TraktrSettingTab.display()`
 3. Add a `fetchXxx(type, clientId, accessToken)` function in `trakt-api.ts` (reuse `fetchPaginated`)
 4. Inside `fetchAndMergeMovies` / `fetchAndMergeShows` in `sync-engine.ts`, add the new fetch to the `Promise.all` array and a loop to merge the results into the map
 

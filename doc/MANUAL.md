@@ -1,8 +1,8 @@
-# Traksidian — User Manual
+# Traktr — User Manual
 
 ## 1. What it does
 
-Traksidian is an Obsidian plugin that pulls your [Trakt.tv](https://trakt.tv) data and creates one Markdown note per movie or TV show in your vault. Each note contains:
+Traktr is an Obsidian plugin that pulls your [Trakt.tv](https://trakt.tv) data and creates one Markdown note per movie or TV show in your vault. Each note contains:
 
 - **Frontmatter** — structured metadata (title, year, genres, ratings, watch status, Trakt/IMDB/TMDB IDs, poster URL, sync timestamp)
 - **Body** — rendered from a customizable template with `{{variable}}` placeholders
@@ -18,14 +18,14 @@ Movies and shows live in the same folder and are distinguished by the `trakt_typ
 **Community plugin directory:**
 
 1. Open Obsidian → Settings → Community plugins → Browse
-2. Search for "Traksidian" and install
+2. Search for "Traktr" and install
 
 **Manual installation:**
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/sarimabbas/obsidian-trakt-watchlist/releases/latest)
-2. In your vault, create the folder `.obsidian/plugins/traksidian/`
+2. In your vault, create the folder `.obsidian/plugins/traktr/`
 3. Copy the three files into that folder
-4. Open Obsidian → Settings → Community plugins → enable **Traksidian**
+4. Open Obsidian → Settings → Community plugins → enable **Traktr**
 
 ---
 
@@ -34,7 +34,7 @@ Movies and shows live in the same folder and are distinguished by the `trakt_typ
 ### 3a. Create a Trakt application
 
 1. Sign in to [trakt.tv](https://trakt.tv) and go to **Settings → Your API Apps → New Application**
-2. Give it any name (e.g. "Traksidian")
+2. Give it any name (e.g. "Traktr")
 3. For **Redirect URI**, enter `urn:ietf:wg:oauth:2.0:oob`
 4. Save. Copy the **Client ID** and **Client Secret**
 
@@ -50,14 +50,14 @@ Poster images are fetched from [The Movie Database](https://themoviedb.org). A f
 
 ## 4. Authentication flow
 
-1. Open **Settings → Traksidian**
+1. Open **Settings → Traktr**
 2. Paste your **Trakt Client ID** and **Client Secret**
 3. Click **Connect to Trakt** — a modal opens showing a URL and a short device code
 4. Visit the URL in a browser, enter the code, and approve access
 5. The modal polls Trakt and closes automatically once authorized
 6. The Connection status field shows "Connected to Trakt"
 
-To revoke access, click **Disconnect** in the settings tab or run the command **Traksidian: Disconnect account**.
+To revoke access, click **Disconnect** in the settings tab or run the command **Traktr: Disconnect account**.
 
 Access tokens are refreshed automatically before each sync (no manual re-authentication needed).
 
@@ -259,7 +259,7 @@ When **Remove notes for deleted items** is enabled, any note whose composite `ty
 
 ### Running a sync
 
-- **Manual**: command **Traksidian: Sync** (accessible via the command palette)
+- **Manual**: command **Traktr: Sync** (accessible via the command palette)
 - **On startup**: enable **Sync on startup** in settings (runs 5 seconds after Obsidian loads)
 - **Scheduled**: enable **Auto-sync** and set an interval
 

@@ -1,5 +1,5 @@
 import { App, Notice, TFile, TFolder, normalizePath } from "obsidian";
-import type { TraksidianSettings } from "./settings";
+import type { TraktrSettings } from "./settings";
 import type {
   TraktWatchlistItem,
   TraktWatchedMovieItem,
@@ -151,13 +151,13 @@ async function scanExistingNotes(
 
 export class SyncEngine {
   private app: App;
-  private settings: TraksidianSettings;
+  private settings: TraktrSettings;
   private saveSettings: () => Promise<void>;
   private syncing = false;
 
   constructor(
     app: App,
-    settings: TraksidianSettings,
+    settings: TraktrSettings,
     saveSettings: () => Promise<void>
   ) {
     this.app = app;
@@ -180,7 +180,7 @@ export class SyncEngine {
       errors: [],
     };
 
-    console.debug("[Traksidian] Sync started");
+    console.debug("[Traktr] Sync started");
     try {
       // 1. Ensure valid token
       await ensureValidToken(this.settings, this.saveSettings);
@@ -201,24 +201,24 @@ export class SyncEngine {
       await this.reconcileType(merged, result);
 
       // 5. Show result
-      console.debug(`[Traksidian] Sync complete — added: ${result.added}, updated: ${result.updated}, removed: ${result.removed}, failed: ${result.failed}`);
+      console.debug(`[Traktr] Sync complete — added: ${result.added}, updated: ${result.updated}, removed: ${result.removed}, failed: ${result.failed}`);
       let msg = `Sync complete: ${result.added} added, ${result.updated} updated, ${result.removed} removed`;
       if (result.failed > 0) {
         msg += `, ${result.failed} failed`;
-        console.error(`[Traksidian] Sync completed with ${result.failed} failure(s):`);
+        console.error(`[Traktr] Sync completed with ${result.failed} failure(s):`);
         for (const err of result.errors) {
           console.error(err);
         }
       }
       new Notice(msg, result.failed > 0 ? 10000 : 5000);
       if (result.failed > 0) {
-        new Notice(`Traksidian: ${result.errors[0]}${result.errors.length > 1 ? ` (+${result.errors.length - 1} more — see console)` : ""}`, 10000);
+        new Notice(`Traktr: ${result.errors[0]}${result.errors.length > 1 ? ` (+${result.errors.length - 1} more — see console)` : ""}`, 10000);
       }
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : "Unknown error during sync.";
-      console.error("[Traksidian] Sync failed:", e);
-      new Notice(`Traksidian sync failed: ${msg}`, 10000);
+      console.error("[Traktr] Sync failed:", e);
+      new Notice(`Traktr sync failed: ${msg}`, 10000);
       result.errors.push(msg);
     } finally {
       this.syncing = false;
@@ -432,7 +432,7 @@ export class SyncEngine {
         result.failed++;
         const msg = `Failed to sync "${item.title}" (${item.type} ${item.ids.trakt}): ${e instanceof Error ? e.message : String(e)}`;
         result.errors.push(msg);
-        console.error("[Traksidian]", msg, e);
+        console.error("[Traktr]", msg, e);
       }
     }
 
@@ -447,7 +447,7 @@ export class SyncEngine {
             result.failed++;
             const msg = `Failed to remove "${file.name}": ${e instanceof Error ? e.message : String(e)}`;
             result.errors.push(msg);
-            console.error("[Traksidian]", msg, e);
+            console.error("[Traktr]", msg, e);
           }
         }
       }

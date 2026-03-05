@@ -1,4 +1,4 @@
-# Traksidian
+# Traktr
 
 Obsidian plugin to sync your Trakt.tv watchlist, watch history, favorites, and ratings.
 
@@ -24,21 +24,21 @@ Obsidian plugin to sync your Trakt.tv watchlist, watch history, favorites, and r
 **Community plugin directory:**
 
 1. Open Obsidian → Settings → Community plugins → Browse
-2. Search for "Traksidian" and install
+2. Search for "Traktr" and install
 
 **Manual installation:**
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](../../releases/latest)
-2. Create `.obsidian/plugins/traksidian/` in your vault
+2. Create `.obsidian/plugins/traktr/` in your vault
 3. Copy the three files into that folder
 4. Enable the plugin in Settings → Community plugins
 
 ## Quick start
 
 1. Go to [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) and create a new application with redirect URI `urn:ietf:wg:oauth:2.0:oob`
-2. Copy the **Client ID** and **Client Secret** into Settings → Traksidian
+2. Copy the **Client ID** and **Client Secret** into Settings → Traktr
 3. Click **Connect to Trakt** and follow the device auth flow
-4. Run the command **Traksidian: Sync watchlist**
+4. Run the command **Traktr: Sync watchlist**
 
 For full configuration options, see the [User Manual](doc/MANUAL.md).
 

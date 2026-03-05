@@ -1,14 +1,14 @@
 import { Notice, Plugin } from "obsidian";
 import {
   DEFAULT_SETTINGS,
-  TraksidianSettingTab,
-  type TraksidianSettings,
+  TraktrSettingTab,
+  type TraktrSettings,
 } from "./settings";
 import { AuthModal } from "./trakt-auth";
 import { SyncEngine } from "./sync-engine";
 
-export default class TraksidianPlugin extends Plugin {
-  settings: TraksidianSettings = DEFAULT_SETTINGS;
+export default class TraktrPlugin extends Plugin {
+  settings: TraktrSettings = DEFAULT_SETTINGS;
   private syncEngine!: SyncEngine;
   private autoSyncIntervalId: number | null = null;
   private statusBarEl: HTMLElement | null = null;
@@ -16,7 +16,7 @@ export default class TraksidianPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
     console.debug(
-      "[Traksidian] Plugin loaded. Connected:",
+      "[Traktr] Plugin loaded. Connected:",
       !!this.settings.accessToken,
     );
 
@@ -25,7 +25,7 @@ export default class TraksidianPlugin extends Plugin {
     );
 
     // Settings tab
-    this.addSettingTab(new TraksidianSettingTab(this.app, this));
+    this.addSettingTab(new TraktrSettingTab(this.app, this));
 
     // Commands
     this.addCommand({
@@ -130,7 +130,7 @@ export default class TraksidianPlugin extends Plugin {
 
   private updateStatusBar(status: string) {
     if (this.statusBarEl) {
-      this.statusBarEl.setText(status ? `Traksidian: ${status}` : "");
+      this.statusBarEl.setText(status ? `Traktr: ${status}` : "");
     }
   }
 }
