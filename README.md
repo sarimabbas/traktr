@@ -2,7 +2,7 @@
 
 Sync your Trakt.tv watchlist, watch history, favorites, and ratings to Obsidian notes.
 
-![bases_view](bases_view.png)
+![bases_view](./doc/bases_view.png)
 
 ## Features
 
@@ -44,9 +44,9 @@ For full configuration options, see the [User Manual](doc/MANUAL.md).
 
 ## Screenshots
 
-![graph_view](graph_view.png)
+![graph_view](./doc/graph_view.png)
 
-![note_view](note_view.png)
+![note_view](./doc/note_view.png)
 
 ## License
 
