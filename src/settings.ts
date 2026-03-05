@@ -61,9 +61,7 @@ export interface TraksidianSettings {
   deleteRemovedItems: boolean;
 }
 
-export const DEFAULT_MOVIE_TEMPLATE = `{{tag_notes}}
-
-![poster]({{poster_url}})
+export const DEFAULT_MOVIE_TEMPLATE = `![poster]({{poster_url}})
 
 > {{tagline}}
 
@@ -91,9 +89,7 @@ export const DEFAULT_MOVIE_TEMPLATE = `{{tag_notes}}
 
 `;
 
-export const DEFAULT_SHOW_TEMPLATE = `{{tag_notes}}
-
-![poster]({{poster_url}})
+export const DEFAULT_SHOW_TEMPLATE = `![poster]({{poster_url}})
 
 ## Overview
 {{overview}}
@@ -376,7 +372,7 @@ export class TraksidianSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Add tags")
       .setDesc(
-        "Add Obsidian tags to the note frontmatter on each sync. E.g. #trakt/genre/action.",
+        "Add metadata tags to the note frontmatter on each sync. E.g. #trakt/genre/action.",
       )
       .addToggle((toggle) =>
         toggle
@@ -403,12 +399,17 @@ export class TraksidianSettingTab extends PluginSettingTab {
       );
 
     // ── Tag notes ──
-    new Setting(containerEl).setName("Tag notes").setHeading();
+    new Setting(containerEl)
+      .setName("Tag notes")
+      .setDesc(
+        "Tag notes are topic files you link to/from your notes. Stick to one of tags or tag notes, or use both.",
+      )
+      .setHeading();
 
     new Setting(containerEl)
       .setName("Add tag notes to frontmatter")
       .setDesc(
-        "Add a wikilink list property to the note frontmatter on each sync. E.g. [[trakt/genre/action]].",
+        "Add a wikilink list property to the note frontmatter on each sync. E.g. [[trakt/genre/action]]. Or leave this setting off and use the {{tag_notes}} template variable to place links in the note body instead.",
       )
       .addToggle((toggle) =>
         toggle
@@ -421,9 +422,7 @@ export class TraksidianSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Create tag notes")
-      .setDesc(
-        "Automatically create tag note files if they don't exist. Useful for building a topic graph.",
-      )
+      .setDesc("Automatically create tag note files if they don't exist.")
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.createTagNotes)
@@ -436,7 +435,7 @@ export class TraksidianSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Tag notes folder")
       .setDesc(
-        'Root vault folder for tag notes. Used for frontmatter links, file creation, and the {{tag_notes}} template variable. E.g. "trakt" → [[trakt/genre/action]].',
+        'Folder for tag notes. Used for frontmatter links, file creation, and the {{tag_notes}} template variable. E.g. "trakt" → [[trakt/genre/action]].',
       )
       .addText((text) =>
         text
@@ -542,9 +541,7 @@ export class TraksidianSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Auto-sync")
-      .setDesc(
-        `Periodically sync in the background. Currently every ${this.plugin.settings.autoSyncIntervalMinutes} minutes.`,
-      )
+      .setDesc(`Periodically sync in the background.`)
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.autoSyncEnabled)
@@ -576,7 +573,7 @@ export class TraksidianSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Overwrite existing note body")
       .setDesc(
-        "When off, only frontmatter is updated and your notes are preserved. When on, the full note is regenerated from the template on every sync.",
+        "When off, only frontmatter is updated and your notes are preserved. When on, the full note is regenerated from the template on every sync — any edits you've made to the note body will be permanently lost.",
       )
       .addToggle((toggle) =>
         toggle
