@@ -100,7 +100,7 @@ export default class TraktrPlugin extends Plugin {
   /**
    * Start the Trakt device auth flow.
    */
-  async startAuth(): Promise<void> {
+  startAuth(): void {
     const modal = new AuthModal(this.app, this.settings, async () => {
       await this.saveSettings();
     });
