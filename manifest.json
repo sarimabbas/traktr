@@ -1,7 +1,7 @@
 {
   "id": "traktr",
   "name": "Traktr",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "minAppVersion": "1.4.0",
   "description": "Sync your Trakt.tv watchlist, watch history, favorites, and ratings.",
   "author": "Sarim Abbas",
