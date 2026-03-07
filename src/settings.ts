@@ -177,7 +177,7 @@ export class TraktrSettingTab extends PluginSettingTab {
       .setDesc("Create an app at trakt.tv/oauth/applications to get this.")
       .addText((text) =>
         text
-          .setPlaceholder("Paste your Trakt client ID")
+          .setPlaceholder("Trakt client ID")
           .setValue(this.plugin.settings.clientId)
           .onChange(async (value) => {
             this.plugin.settings.clientId = value.trim();
@@ -187,10 +187,10 @@ export class TraktrSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Trakt client secret")
-      .setDesc("From the same Trakt application page.")
+      .setDesc("From the same application page.")
       .addText((text) =>
         text
-          .setPlaceholder("Paste your Trakt client secret")
+          .setPlaceholder("Trakt client secret")
           .setValue(this.plugin.settings.clientSecret)
           .onChange(async (value) => {
             this.plugin.settings.clientSecret = value.trim();
@@ -203,7 +203,7 @@ export class TraktrSettingTab extends PluginSettingTab {
     );
 
     if (this.plugin.settings.accessToken) {
-      connectionSetting.setDesc("Connected to Trakt.");
+      connectionSetting.setDesc("Traktr connected.");
       connectionSetting.addButton((btn) =>
         btn
           .setButtonText("Disconnect")
@@ -213,7 +213,7 @@ export class TraktrSettingTab extends PluginSettingTab {
             this.plugin.settings.refreshToken = "";
             this.plugin.settings.tokenExpiresAt = 0;
             await this.plugin.saveSettings();
-            new Notice("Disconnected from Trakt.");
+            new Notice("Traktr disconnected.");
             this.display();
           }),
       );
@@ -221,14 +221,14 @@ export class TraktrSettingTab extends PluginSettingTab {
       connectionSetting.setDesc("Not connected.");
       connectionSetting.addButton((btn) =>
         btn
-          .setButtonText("Connect to Trakt")
+          .setButtonText("Connect")
           .setCta()
           .onClick(async () => {
             if (
               !this.plugin.settings.clientId ||
               !this.plugin.settings.clientSecret
             ) {
-              new Notice("Please enter your Trakt client ID and secret first.");
+              new Notice("Please enter your client ID and secret first.");
               return;
             }
             this.plugin.startAuth();
@@ -238,16 +238,16 @@ export class TraktrSettingTab extends PluginSettingTab {
     }
 
     // ── TMDB (poster images) ──
-    new Setting(containerEl).setName("TMDB (poster images)").setHeading();
+    new Setting(containerEl).setName("TMDB").setHeading();
 
     new Setting(containerEl)
-      .setName("TMDB API key")
+      .setName("API key")
       .setDesc(
         "Optional. Get a free key at themoviedb.org/settings/api. If blank, poster images are skipped.",
       )
       .addText((text) =>
         text
-          .setPlaceholder("Paste your TMDB API key")
+          .setPlaceholder("Paste your API key")
           .setValue(this.plugin.settings.tmdbApiKey)
           .onChange(async (value) => {
             this.plugin.settings.tmdbApiKey = value.trim();
@@ -257,7 +257,7 @@ export class TraktrSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Poster size")
-      .setDesc("Image size for poster URLs embedded in notes.")
+      .setDesc("Image size for posters embedded in notes.")
       .addDropdown((dd) => {
         for (const size of POSTER_SIZES) {
           dd.addOption(size, size);
@@ -274,12 +274,10 @@ export class TraktrSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Notes folder")
-      .setDesc(
-        'Vault folder where Trakt notes are stored. Defaults to "trakt".',
-      )
+      .setDesc("Vault folder where notes are stored.")
       .addText((text) =>
         text
-          .setPlaceholder("trakt")
+          .setPlaceholder("Trakt")
           .setValue(this.plugin.settings.folder)
           .onChange(async (value) => {
             this.plugin.settings.folder = value.trim();
@@ -309,7 +307,7 @@ export class TraktrSettingTab extends PluginSettingTab {
       )
       .addText((text) =>
         text
-          .setPlaceholder("trakt_")
+          .setPlaceholder("Trakt_")
           .setValue(this.plugin.settings.propertyPrefix)
           .onChange(async (value) => {
             this.plugin.settings.propertyPrefix = value;
@@ -344,7 +342,7 @@ export class TraktrSettingTab extends PluginSettingTab {
     );
 
     const showTemplateSetting = new Setting(containerEl)
-      .setName("TV show note template")
+      .setName("Show template")
       .setDesc(
         "Template for the body of TV show notes. Uses {{variable}} syntax.",
       );
@@ -390,7 +388,7 @@ export class TraktrSettingTab extends PluginSettingTab {
       )
       .addText((text) =>
         text
-          .setPlaceholder("trakt")
+          .setPlaceholder("Trakt")
           .setValue(this.plugin.settings.tagPrefix)
           .onChange(async (value) => {
             this.plugin.settings.tagPrefix = value.trim();
@@ -439,7 +437,7 @@ export class TraktrSettingTab extends PluginSettingTab {
       )
       .addText((text) =>
         text
-          .setPlaceholder("trakt")
+          .setPlaceholder("Trakt")
           .setValue(this.plugin.settings.tagNotesFolder)
           .onChange(async (value) => {
             this.plugin.settings.tagNotesFolder = value.trim();
@@ -516,8 +514,8 @@ export class TraktrSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Sync TV shows")
-      .setDesc("Include TV shows.")
+      .setName("Sync shows")
+      .setDesc("Include shows.")
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.syncShows)
@@ -586,9 +584,7 @@ export class TraktrSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Remove notes for deleted items")
-      .setDesc(
-        "When on, notes for items removed from all synced Trakt sources are moved to trash.",
-      )
+      .setDesc("When on, notes from all sync sources are moved to trash.")
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.deleteRemovedItems)
@@ -604,7 +600,7 @@ export class TraktrSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Reset to defaults")
       .setDesc(
-        "Clear all settings back to their default values. Authentication credentials and TMDB API key are preserved.",
+        "Clear all settings back to their default values. Authentication credentials are preserved.",
       )
       .addButton((btn) =>
         btn

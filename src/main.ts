@@ -34,7 +34,7 @@ export default class TraktrPlugin extends Plugin {
       callback: async () => {
         if (!this.settings.accessToken) {
           new Notice(
-            "Not connected to Trakt. Use settings or the command palette to connect.",
+            "Traktr not connected. Use settings or the command palette to connect.",
           );
           return;
         }
@@ -50,7 +50,7 @@ export default class TraktrPlugin extends Plugin {
       callback: async () => {
         if (!this.settings.clientId || !this.settings.clientSecret) {
           new Notice(
-            "Please configure your Trakt client ID and secret in settings first.",
+            "Please configure your client ID and secret in settings first.",
           );
           return;
         }
@@ -66,7 +66,7 @@ export default class TraktrPlugin extends Plugin {
         this.settings.refreshToken = "";
         this.settings.tokenExpiresAt = 0;
         await this.saveSettings();
-        new Notice("Disconnected from Trakt.");
+        new Notice("Traktr disconnected.");
       },
     });
 

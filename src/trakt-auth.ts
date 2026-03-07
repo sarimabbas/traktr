@@ -21,7 +21,7 @@ export class AuthModal extends Modal {
   constructor(
     app: App,
     settings: TraktrSettings,
-    onSuccess: () => Promise<void>
+    onSuccess: () => Promise<void>,
   ) {
     super(app);
     this.settings = settings;
@@ -33,7 +33,7 @@ export class AuthModal extends Modal {
     contentEl.empty();
     contentEl.addClass("traktr-auth-modal");
 
-    contentEl.createEl("h2", { text: "Connect to Trakt" });
+    contentEl.createEl("h2", { text: "Connect" });
 
     const statusEl = contentEl.createEl("p", {
       text: "Requesting device code...",
@@ -84,7 +84,7 @@ export class AuthModal extends Modal {
       this.countdownInterval = window.setInterval(() => {
         const remaining = Math.max(
           0,
-          Math.floor((expiresAt - Date.now()) / 1000)
+          Math.floor((expiresAt - Date.now()) / 1000),
         );
         countdownEl.setText(`Code expires in ${remaining}s`);
         if (remaining <= 0) {
@@ -107,7 +107,7 @@ export class AuthModal extends Modal {
             const token = await pollDeviceToken(
               deviceCode.device_code,
               this.settings.clientId,
-              this.settings.clientSecret
+              this.settings.clientSecret,
             );
 
             if (token) {
@@ -122,7 +122,7 @@ export class AuthModal extends Modal {
 
               await this.onSuccess();
 
-              new Notice("Successfully connected to Trakt!");
+              new Notice("Successfully connected!");
               this.close();
             }
           } catch (e) {
@@ -137,7 +137,7 @@ export class AuthModal extends Modal {
       }, pollIntervalMs);
     } catch (e) {
       statusEl.setText(
-        `Failed to start auth: ${e instanceof Error ? e.message : String(e)}`
+        `Failed to start auth: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
@@ -171,7 +171,7 @@ export class AuthModal extends Modal {
  */
 export async function ensureValidToken(
   settings: TraktrSettings,
-  saveSettings: () => Promise<void>
+  saveSettings: () => Promise<void>,
 ): Promise<void> {
   if (!settings.accessToken || !settings.refreshToken) {
     throw new Error("Not connected to Trakt. Please connect first.");
@@ -187,7 +187,7 @@ export async function ensureValidToken(
     const token = await refreshAccessToken(
       settings.refreshToken,
       settings.clientId,
-      settings.clientSecret
+      settings.clientSecret,
     );
     settings.accessToken = token.access_token;
     settings.refreshToken = token.refresh_token;
